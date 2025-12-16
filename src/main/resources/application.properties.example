@@ -1,0 +1,115 @@
+# ===========================================
+# PLANTILLA DE CONFIGURACIÓN
+# ===========================================
+# Copia este archivo como application.properties
+# y completa con tus credenciales
+
+# ===========================================
+# CONFIGURACIÓN DE BASE DE DATOS
+# ===========================================
+spring.application.name=sistema-via-mail
+spring.datasource.url=jdbc:postgresql://localhost:5432/transcomarapa
+spring.datasource.username=TU_USUARIO_DB
+spring.datasource.password=TU_PASSWORD_DB
+
+# JPA/Hibernate
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+# ===========================================
+# CONFIGURACIÓN DE CORREO - POP3 (Entrada)
+# ===========================================
+mail.pop3.host=mail.tecnoweb.org.bo
+mail.pop3.port=995
+mail.pop3.ssl.enable=true
+mail.pop3.starttls.enable=true
+
+# Credenciales de correo
+mail.username=TU_EMAIL@tecnoweb.org.bo
+mail.password=TU_PASSWORD_EMAIL
+
+# ===========================================
+# CONFIGURACIÓN DE CORREO - SMTP (Salida)
+# ===========================================
+mail.smtp.host=mail.tecnoweb.org.bo
+mail.smtp.port=465
+mail.smtp.auth=true
+mail.smtp.ssl.enable=true
+mail.smtp.starttls.enable=false
+
+# Email "From"
+mail.from=TU_EMAIL@tecnoweb.org.bo
+
+# ===========================================
+# CONFIGURACIÓN DEL SISTEMA
+# ===========================================
+# Intervalo de polling en milisegundos (60000 = 60 segundos)
+mail.polling-interval=60000
+
+# Habilitar/deshabilitar procesamiento de correos
+mail.enabled=true
+
+# ===========================================
+# LOGGING
+# ===========================================
+logging.level.root=INFO
+logging.level.com.grupo04sa.sistema_via_mail=DEBUG
+logging.level.org.springframework=INFO
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+
+# Archivo de logs (opcional)
+#logging.file.name=logs/sistema-via-mail.log
+#logging.file.max-size=10MB
+#logging.file.max-history=30
+
+# ===========================================
+# SERVIDOR (Puerto)
+# ===========================================
+server.port=8080
+
+# ===========================================
+# INSTRUCCIONES DE CONFIGURACIÓN
+# ===========================================
+# 
+# 1. BASE DE DATOS
+#    - Asegúrate que PostgreSQL esté corriendo
+#    - La base de datos 'transcomarapa' debe existir
+#    - Reemplaza TU_USUARIO_DB y TU_PASSWORD_DB
+#
+# 2. CORREO ELECTRÓNICO
+#    - Reemplaza TU_EMAIL@tecnoweb.org.bo con tu email del grupo
+#    - Reemplaza TU_PASSWORD_EMAIL con la contraseña del email
+#    - Verifica que mail.tecnoweb.org.bo sea accesible
+#
+# 3. POLLING
+#    - mail.polling-interval en milisegundos
+#    - 60000 = 60 segundos (recomendado)
+#    - Reducir puede sobrecargar el servidor de email
+#
+# 4. HABILITAR/DESHABILITAR
+#    - mail.enabled=true para activar el scheduler
+#    - mail.enabled=false para desactivar (útil en desarrollo)
+#
+# 5. LOGGING
+#    - DEBUG para desarrollo
+#    - INFO para producción
+#    - Descomentar logging.file.name para guardar logs en archivo
+#
+# ===========================================
+# VERIFICACIÓN DE CONFIGURACIÓN
+# ===========================================
+# Antes de ejecutar, verifica:
+# 
+# ✓ PostgreSQL corriendo en localhost:5432
+# ✓ Base de datos 'transcomarapa' existe
+# ✓ Tablas creadas (usuarios, viajes, boletos, etc.)
+# ✓ Email configurado correctamente
+# ✓ Puertos 995 (POP3) y 465 (SMTP) accesibles
+# ✓ Firewall no bloquea conexiones
+#
+# Ejecutar: mvn spring-boot:run
+# ===========================================
