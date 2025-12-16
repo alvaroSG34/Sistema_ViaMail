@@ -21,6 +21,21 @@ public class MailConfig {
     @Value("${spring.mail.port}")
     private int port;
 
+    @Value("${spring.mail.username:}")
+    private String username;
+
+    @Value("${spring.mail.password:}")
+    private String password;
+
+    @Value("${spring.mail.properties.mail.smtp.auth:false}")
+    private String smtpAuth;
+
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable:false}")
+    private String starttlsEnable;
+
+    @Value("${spring.mail.properties.mail.smtp.starttls.required:false}")
+    private String starttlsRequired;
+
     @Bean
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
@@ -28,15 +43,21 @@ public class MailConfig {
         mailSender.setPort(port);
         mailSender.setProtocol("smtp");
 
-        // NO configurar username/password - el servidor no requiere autenticación en
-        // puerto 25
+        // Configurar username/password si están presentes (Gmail los necesita)
+        if (username != null && !username.isEmpty()) {
+            mailSender.setUsername(username);
+        }
+        if (password != null && !password.isEmpty()) {
+            mailSender.setPassword(password);
+        }
 
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "false");
-        props.put("mail.smtp.starttls.enable", "false");
-        props.put("mail.smtp.starttls.required", "false");
+        props.put("mail.smtp.auth", smtpAuth);
+        props.put("mail.smtp.starttls.enable", starttlsEnable);
+        props.put("mail.smtp.starttls.required", starttlsRequired);
         props.put("mail.smtp.ssl.enable", "false");
+        props.put("mail.smtp.ssl.trust", "*");
         props.put("mail.smtp.connectiontimeout", "10000");
         props.put("mail.smtp.timeout", "10000");
         props.put("mail.smtp.writetimeout", "10000");

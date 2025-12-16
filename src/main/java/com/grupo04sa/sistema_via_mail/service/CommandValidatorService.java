@@ -1,15 +1,16 @@
 package com.grupo04sa.sistema_via_mail.service;
 
-import com.grupo04sa.sistema_via_mail.dto.CommandRequest;
-import com.grupo04sa.sistema_via_mail.exception.UnauthorizedException;
-import com.grupo04sa.sistema_via_mail.model.Usuario;
-import com.grupo04sa.sistema_via_mail.repository.UsuarioRepository;
+import java.util.Arrays;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
+import com.grupo04sa.sistema_via_mail.dto.CommandRequest;
+import com.grupo04sa.sistema_via_mail.exception.UnauthorizedException;
+import com.grupo04sa.sistema_via_mail.model.Usuario;
+import com.grupo04sa.sistema_via_mail.repository.UsuarioRepository;
 
 /**
  * Servicio para validar permisos de ejecución de comandos según el rol del

@@ -303,11 +303,11 @@ public class CommandExecutorService {
     private String ejecutarHELP(CommandRequest request, Usuario usuario) {
         StringBuilder sb = new StringBuilder();
         String rol = usuario.getRol();
-        
+
         sb.append("=== SISTEMA TRANS COMARAPA - COMANDOS DISPONIBLES ===\n\n");
         sb.append("Usuario: ").append(usuario.getNombreCompleto()).append("\n");
         sb.append("Rol: ").append(rol).append("\n\n");
-        
+
         // Comandos de lectura (todos los roles)
         sb.append("--- COMANDOS DE CONSULTA ---\n");
         sb.append("LISUSU[\"filtro\"] - Listar usuarios (* para todos)\n");
@@ -318,7 +318,7 @@ public class CommandExecutorService {
         sb.append("GETRUT[\"id\"] - Obtener ruta por ID\n");
         sb.append("LISVIA[\"filtro\"] - Listar viajes\n");
         sb.append("GETVIA[\"id\"] - Obtener viaje por ID\n\n");
-        
+
         // Comandos de secretaria
         if (usuario.isSecretariaOrAdmin()) {
             sb.append("--- COMANDOS DE GESTIÓN (SECRETARIA) ---\n");
@@ -333,7 +333,7 @@ public class CommandExecutorService {
             sb.append("INSPAG[params] - Insertar pago\n");
             sb.append("LISPAG[\"filtro\"] - Listar pagos\n\n");
         }
-        
+
         // Comandos de admin
         if (usuario.isAdmin()) {
             sb.append("--- COMANDOS DE ADMINISTRACIÓN (ADMIN) ---\n");
@@ -350,10 +350,10 @@ public class CommandExecutorService {
             sb.append("UPDVIA[params] - Actualizar viaje\n");
             sb.append("DELVIA[\"id\"] - Eliminar viaje\n\n");
         }
-        
+
         sb.append("Para más información sobre un comando específico, ");
         sb.append("consulte la documentación del sistema.\n");
-        
+
         return sb.toString();
     }
 }
