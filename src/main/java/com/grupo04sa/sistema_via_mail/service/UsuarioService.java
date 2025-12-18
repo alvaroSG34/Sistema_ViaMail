@@ -1,18 +1,19 @@
 package com.grupo04sa.sistema_via_mail.service;
 
-import com.grupo04sa.sistema_via_mail.exception.EntityNotFoundException;
-import com.grupo04sa.sistema_via_mail.exception.ValidationException;
-import com.grupo04sa.sistema_via_mail.model.Usuario;
-import com.grupo04sa.sistema_via_mail.repository.UsuarioRepository;
-import com.grupo04sa.sistema_via_mail.util.CommandValidator;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.grupo04sa.sistema_via_mail.exception.EntityNotFoundException;
+import com.grupo04sa.sistema_via_mail.exception.ValidationException;
+import com.grupo04sa.sistema_via_mail.model.Usuario;
+import com.grupo04sa.sistema_via_mail.repository.UsuarioRepository;
+import com.grupo04sa.sistema_via_mail.util.CommandValidator;
 
 /**
  * Servicio de lógica de negocio para Usuarios
@@ -58,7 +59,7 @@ public class UsuarioService {
         }
 
         if (telefono != null && !telefono.isEmpty() && !validator.isValidTelefono(telefono)) {
-            throw new ValidationException("telefono", "Teléfono inválido. Debe tener 8 dígitos y comenzar con 6 o 7");
+            throw new ValidationException("telefono", "Teléfono inválido. Debe contener entre 5 y 15 dígitos");
         }
 
         if (correo != null && !correo.isEmpty() && !validator.isValidEmail(correo)) {
@@ -76,15 +77,17 @@ public class UsuarioService {
         }
 
         // Crear usuario
-        Usuario usuario = Usuario.builder()
-                .ci(ci)
-                .nombre(nombre)
-                .apellido(apellido)
-                .rol(rol)
-                .telefono(telefono)
-                .correo(correo)
-                .password(passwordEncoder.encode(ci)) // Password por defecto = CI
-                .build();
+        Usuario usuario = new Usuario();
+        usuario.setCi(ci);
+        usuario.setNombre(nombre);
+        usuario.setApellido(apellido);
+        usuario.setRol(rol);
+        usuario.setTelefono(telefono);
+        usuario.setCorreo(correo);
+        usuario.setPassword(passwordEncoder.encode(ci)); // Password por defecto = CI
+        usuario.setTemaPreferido("claro"); // Valor por defecto requerido por BD
+        usuario.setModoContraste("normal"); // Valor por defecto
+        usuario.setTamanoFuente("medio"); // Valor por defecto
 
         usuario = usuarioRepository.save(usuario);
 

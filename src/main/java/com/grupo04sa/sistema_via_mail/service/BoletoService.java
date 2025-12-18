@@ -11,10 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.grupo04sa.sistema_via_mail.exception.EntityNotFoundException;
 import com.grupo04sa.sistema_via_mail.exception.ValidationException;
 import com.grupo04sa.sistema_via_mail.model.Boleto;
+import com.grupo04sa.sistema_via_mail.model.PagoVenta;
 import com.grupo04sa.sistema_via_mail.model.Usuario;
 import com.grupo04sa.sistema_via_mail.model.Venta;
 import com.grupo04sa.sistema_via_mail.model.Viaje;
 import com.grupo04sa.sistema_via_mail.repository.BoletoRepository;
+import com.grupo04sa.sistema_via_mail.repository.PagoVentaRepository;
 import com.grupo04sa.sistema_via_mail.repository.UsuarioRepository;
 import com.grupo04sa.sistema_via_mail.repository.VentaRepository;
 import com.grupo04sa.sistema_via_mail.repository.ViajeRepository;
@@ -31,15 +33,17 @@ public class BoletoService {
     private final ViajeRepository viajeRepository;
     private final UsuarioRepository usuarioRepository;
     private final VentaRepository ventaRepository;
+    private final PagoVentaRepository pagoVentaRepository;
     private final CommandValidator validator;
 
     public BoletoService(BoletoRepository boletoRepository, ViajeRepository viajeRepository,
             UsuarioRepository usuarioRepository, VentaRepository ventaRepository,
-            CommandValidator validator) {
+            PagoVentaRepository pagoVentaRepository, CommandValidator validator) {
         this.boletoRepository = boletoRepository;
         this.viajeRepository = viajeRepository;
         this.usuarioRepository = usuarioRepository;
         this.ventaRepository = ventaRepository;
+        this.pagoVentaRepository = pagoVentaRepository;
         this.validator = validator;
     }
 
@@ -102,6 +106,19 @@ public class BoletoService {
                 .build();
 
         venta = ventaRepository.save(venta);
+
+        // Registrar pago automáticamente si es en efectivo
+        if ("Efectivo".equals(metodoPago)) {
+            PagoVenta pago = new PagoVenta();
+            pago.setVenta(venta);
+            pago.setMonto(viaje.getPrecio());
+            pago.setMetodoPago(metodoPago);
+            pago.setNumCuota((short) 1);
+            pago.setFechaPago(LocalDateTime.now());
+            pago.setEstadoPago("pagado");
+            pagoVentaRepository.save(pago);
+            log.info("Pago en efectivo registrado automáticamente: ${}", viaje.getPrecio());
+        }
 
         // Crear boleto
         Boleto boleto = Boleto.builder()

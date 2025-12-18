@@ -1,12 +1,12 @@
 package com.grupo04sa.sistema_via_mail.util;
 
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
+
+import org.springframework.stereotype.Component;
 
 /**
  * Utilidad para validar datos en comandos
@@ -16,7 +16,7 @@ public class CommandValidator {
 
     // Patrones de validación
     private static final Pattern CI_PATTERN = Pattern.compile("^[0-9]{5,15}$");
-    private static final Pattern TELEFONO_PATTERN = Pattern.compile("^[67]\\d{7}$");
+    private static final Pattern TELEFONO_PATTERN = Pattern.compile("^[0-9]{5,15}$");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern PLACA_PATTERN = Pattern.compile("^[A-Z0-9-]{3,15}$");
 
@@ -28,7 +28,7 @@ public class CommandValidator {
     }
 
     /**
-     * Valida número de teléfono boliviano (8 dígitos, empieza con 6 o 7)
+     * Valida número de teléfono (5-15 dígitos)
      */
     public boolean isValidTelefono(String telefono) {
         return telefono != null && TELEFONO_PATTERN.matcher(telefono).matches();
@@ -116,7 +116,8 @@ public class CommandValidator {
             return parsed.isAfter(LocalDateTime.now());
         } catch (DateTimeParseException e) {
             try {
-                LocalDateTime parsed = LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                LocalDateTime parsed = LocalDateTime.parse(dateTime,
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 return parsed.isAfter(LocalDateTime.now());
             } catch (DateTimeParseException ex) {
                 return false;
@@ -128,55 +129,45 @@ public class CommandValidator {
      * Valida rol de usuario
      */
     public boolean isValidRol(String rol) {
-        return rol != null && (
-            "Admin".equals(rol) ||
-            "Secretaria".equals(rol) ||
-            "Conductor".equals(rol) ||
-            "Cliente".equals(rol)
-        );
+        return rol != null && ("Admin".equals(rol) ||
+                "Secretaria".equals(rol) ||
+                "Conductor".equals(rol) ||
+                "Cliente".equals(rol));
     }
 
     /**
      * Valida estado de viaje
      */
     public boolean isValidEstadoViaje(String estado) {
-        return estado != null && (
-            "programado".equals(estado) ||
-            "en_curso".equals(estado) ||
-            "finalizado".equals(estado) ||
-            "cancelado".equals(estado)
-        );
+        return estado != null && ("programado".equals(estado) ||
+                "en_curso".equals(estado) ||
+                "finalizado".equals(estado) ||
+                "cancelado".equals(estado));
     }
 
     /**
      * Valida modalidad de pago de encomienda
      */
     public boolean isValidModalidadPago(String modalidad) {
-        return modalidad != null && (
-            "origen".equals(modalidad) ||
-            "mixto".equals(modalidad) ||
-            "destino".equals(modalidad)
-        );
+        return modalidad != null && ("origen".equals(modalidad) ||
+                "mixto".equals(modalidad) ||
+                "destino".equals(modalidad));
     }
 
     /**
      * Valida método de pago
      */
     public boolean isValidMetodoPago(String metodo) {
-        return metodo != null && (
-            "Efectivo".equals(metodo) ||
-            "QR".equals(metodo)
-        );
+        return metodo != null && ("Efectivo".equals(metodo) ||
+                "QR".equals(metodo));
     }
 
     /**
      * Valida estado de pago
      */
     public boolean isValidEstadoPago(String estado) {
-        return estado != null && (
-            "Pendiente".equals(estado) ||
-            "Pagado".equals(estado) ||
-            "anulado".equals(estado)
-        );
+        return estado != null && ("Pendiente".equals(estado) ||
+                "Pagado".equals(estado) ||
+                "anulado".equals(estado));
     }
 }

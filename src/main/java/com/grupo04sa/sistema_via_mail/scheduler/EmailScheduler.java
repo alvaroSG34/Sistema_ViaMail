@@ -13,7 +13,6 @@ import com.grupo04sa.sistema_via_mail.dto.CommandRequest;
 import com.grupo04sa.sistema_via_mail.dto.CommandResponse;
 import com.grupo04sa.sistema_via_mail.service.CommandExecutorService;
 import com.grupo04sa.sistema_via_mail.service.CommandParserService;
-import com.grupo04sa.sistema_via_mail.service.EmailLogService;
 import com.grupo04sa.sistema_via_mail.service.EmailService;
 
 import jakarta.mail.Message;
@@ -29,23 +28,22 @@ public class EmailScheduler {
     private final EmailService emailService;
     private final CommandParserService parserService;
     private final CommandExecutorService executorService;
-    private final EmailLogService emailLogService;
 
     @Value("${mail.enabled:true}")
     private boolean mailEnabled;
 
     public EmailScheduler(EmailService emailService, CommandParserService parserService,
-            CommandExecutorService executorService, EmailLogService emailLogService) {
+            CommandExecutorService executorService) {
         this.emailService = emailService;
         this.parserService = parserService;
         this.executorService = executorService;
-        this.emailLogService = emailLogService;
+
     }
 
     /**
-     * Procesa correos no leídos cada 60 segundos
+     * Procesa correos no leídos cada 30 segundos (configurable)
      */
-    @Scheduled(fixedDelayString = "${mail.polling-interval:60000}")
+    @Scheduled(fixedDelayString = "${email.scheduler.polling.interval:30000}")
     public void procesarCorreos() {
         if (!mailEnabled) {
             log.debug("Procesamiento de correo deshabilitado");
@@ -69,6 +67,10 @@ public class EmailScheduler {
             for (Message mensaje : mensajes) {
                 procesarCorreo(mensaje);
             }
+
+            // Cerrar conexión y aplicar cambios (eliminar mensajes procesados)
+            emailService.cerrarConexionPOP3();
+            log.info("✅ Conexión POP3 cerrada - Mensajes procesados eliminados del servidor");
 
         } catch (Exception e) {
             log.error("Error al procesar correos: {}", e.getMessage(), e);
@@ -119,16 +121,6 @@ public class EmailScheduler {
             // Calcular tiempo de ejecución
             int tiempoEjecucion = (int) (System.currentTimeMillis() - inicio);
 
-            // Registrar en log
-            emailLogService.registrar(
-                    emailRemitente,
-                    comando,
-                    parametrosStr,
-                    cuerpoRespuesta,
-                    response.getEstado(),
-                    response.getMensajeError(),
-                    tiempoEjecucion);
-
             log.info("Correo procesado exitosamente en {}ms", tiempoEjecucion);
 
         } catch (Exception e) {
@@ -150,14 +142,7 @@ public class EmailScheduler {
 
                     // Registrar error en log
                     int tiempoEjecucion = (int) (System.currentTimeMillis() - inicio);
-                    emailLogService.registrar(
-                            emailRemitente,
-                            comando != null ? comando : "DESCONOCIDO",
-                            parametrosStr != null ? parametrosStr : "[]",
-                            cuerpoError,
-                            "ERROR",
-                            e.getMessage(),
-                            tiempoEjecucion);
+
                 }
 
                 // Marcar como leído de todas formas

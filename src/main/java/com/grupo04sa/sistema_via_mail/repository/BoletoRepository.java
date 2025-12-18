@@ -1,13 +1,14 @@
 package com.grupo04sa.sistema_via_mail.repository;
 
-import com.grupo04sa.sistema_via_mail.model.Boleto;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.grupo04sa.sistema_via_mail.model.Boleto;
 
 @Repository
 public interface BoletoRepository extends JpaRepository<Boleto, Long> {
@@ -27,6 +28,11 @@ public interface BoletoRepository extends JpaRepository<Boleto, Long> {
 
     boolean existsByViajeIdAndAsiento(Long viajeId, String asiento);
 
-    @Query("SELECT b FROM Boleto b JOIN FETCH b.venta JOIN FETCH b.viaje WHERE b.id = :id")
+    @Query("SELECT b FROM Boleto b " +
+            "JOIN FETCH b.venta v " +
+            "JOIN FETCH v.usuario " +
+            "JOIN FETCH b.ruta " +
+            "JOIN FETCH b.viaje " +
+            "WHERE b.id = :id")
     Optional<Boleto> findByIdWithDetails(@Param("id") Long id);
 }

@@ -1,10 +1,18 @@
 package com.grupo04sa.sistema_via_mail.util;
 
-import com.grupo04sa.sistema_via_mail.model.*;
-import org.springframework.stereotype.Component;
-
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.grupo04sa.sistema_via_mail.model.Boleto;
+import com.grupo04sa.sistema_via_mail.model.Encomienda;
+import com.grupo04sa.sistema_via_mail.model.PagoVenta;
+import com.grupo04sa.sistema_via_mail.model.Ruta;
+import com.grupo04sa.sistema_via_mail.model.Usuario;
+import com.grupo04sa.sistema_via_mail.model.Vehiculo;
+import com.grupo04sa.sistema_via_mail.model.Venta;
+import com.grupo04sa.sistema_via_mail.model.Viaje;
 
 /**
  * Utilidad para formatear respuestas de comandos en texto plano legible
@@ -41,15 +49,15 @@ public class ResponseFormatter {
         if (usuarios.isEmpty()) {
             return "No se encontraron usuarios.";
         }
-        
+
         StringBuilder sb = new StringBuilder();
         sb.append("Total: ").append(usuarios.size()).append(" usuario(s)\n\n");
-        
+
         for (int i = 0; i < usuarios.size(); i++) {
             sb.append("Usuario #").append(i + 1).append(":\n");
             sb.append(formatUsuario(usuarios.get(i))).append("\n");
         }
-        
+
         return sb.toString();
     }
 
@@ -74,6 +82,25 @@ public class ResponseFormatter {
     }
 
     /**
+     * Formatea lista de Vehículos
+     */
+    public String formatVehiculos(List<Vehiculo> vehiculos) {
+        if (vehiculos.isEmpty()) {
+            return "No se encontraron vehículos.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Total: ").append(vehiculos.size()).append(" vehículo(s)\n\n");
+
+        for (int i = 0; i < vehiculos.size(); i++) {
+            sb.append("Vehículo #").append(i + 1).append(":\n");
+            sb.append(formatVehiculo(vehiculos.get(i))).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Formatea una Ruta
      */
     public String formatRuta(Ruta ruta) {
@@ -82,6 +109,25 @@ public class ResponseFormatter {
         sb.append("- Nombre: ").append(ruta.getNombreCompleto()).append("\n");
         sb.append("- Origen: ").append(ruta.getOrigen()).append("\n");
         sb.append("- Destino: ").append(ruta.getDestino()).append("\n");
+        return sb.toString();
+    }
+
+    /**
+     * Formatea lista de Rutas
+     */
+    public String formatRutas(List<Ruta> rutas) {
+        if (rutas.isEmpty()) {
+            return "No se encontraron rutas.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Total: ").append(rutas.size()).append(" ruta(s)\n\n");
+
+        for (int i = 0; i < rutas.size(); i++) {
+            sb.append("Ruta #").append(i + 1).append(":\n");
+            sb.append(formatRuta(rutas.get(i))).append("\n");
+        }
+
         return sb.toString();
     }
 
@@ -102,6 +148,25 @@ public class ResponseFormatter {
     }
 
     /**
+     * Formatea lista de Viajes
+     */
+    public String formatViajes(List<Viaje> viajes) {
+        if (viajes.isEmpty()) {
+            return "No se encontraron viajes.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Total: ").append(viajes.size()).append(" viaje(s)\n\n");
+
+        for (int i = 0; i < viajes.size(); i++) {
+            sb.append("Viaje #").append(i + 1).append(":\n");
+            sb.append(formatViaje(viajes.get(i))).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Formatea un Boleto
      */
     public String formatBoleto(Boleto boleto) {
@@ -109,6 +174,20 @@ public class ResponseFormatter {
         sb.append("- ID: ").append(boleto.getId()).append("\n");
         sb.append("- Asiento: ").append(boleto.getAsiento()).append("\n");
         sb.append("- Fecha Venta: ").append(boleto.getCreatedAt().format(DATE_FORMATTER)).append("\n");
+
+        // Agregar información de origen y destino
+        if (boleto.getRuta() != null) {
+            sb.append("- Origen: ").append(boleto.getRuta().getOrigen()).append("\n");
+            sb.append("- Destino: ").append(boleto.getRuta().getDestino()).append("\n");
+        }
+
+        // Agregar información del cliente
+        if (boleto.getVenta() != null && boleto.getVenta().getUsuario() != null) {
+            Usuario cliente = boleto.getVenta().getUsuario();
+            String nombreCompleto = cliente.getNombre() + " " + cliente.getApellido();
+            sb.append("- Cliente: ").append(nombreCompleto).append("\n");
+        }
+
         return sb.toString();
     }
 
@@ -144,6 +223,25 @@ public class ResponseFormatter {
     }
 
     /**
+     * Formatea lista de Ventas
+     */
+    public String formatVentas(List<Venta> ventas) {
+        if (ventas.isEmpty()) {
+            return "No se encontraron ventas.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Total: ").append(ventas.size()).append(" venta(s)\n\n");
+
+        for (int i = 0; i < ventas.size(); i++) {
+            sb.append("Venta #").append(i + 1).append(":\n");
+            sb.append(formatVenta(ventas.get(i))).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Formatea un PagoVenta
      */
     public String formatPago(PagoVenta pago) {
@@ -160,13 +258,32 @@ public class ResponseFormatter {
     }
 
     /**
+     * Formatea lista de Pagos
+     */
+    public String formatPagos(List<PagoVenta> pagos) {
+        if (pagos.isEmpty()) {
+            return "No se encontraron pagos.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Total: ").append(pagos.size()).append(" pago(s)\n\n");
+
+        for (int i = 0; i < pagos.size(); i++) {
+            sb.append("Pago #").append(i + 1).append(":\n");
+            sb.append(formatPago(pagos.get(i))).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Formatea lista genérica con contador
      */
     public String formatLista(List<?> lista, String nombreEntidad) {
         if (lista.isEmpty()) {
             return "No se encontraron " + nombreEntidad + ".";
         }
-        
+
         return "Total: " + lista.size() + " " + nombreEntidad + " encontrado(s).";
     }
 

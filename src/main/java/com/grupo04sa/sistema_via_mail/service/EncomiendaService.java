@@ -12,12 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.grupo04sa.sistema_via_mail.exception.EntityNotFoundException;
 import com.grupo04sa.sistema_via_mail.exception.ValidationException;
 import com.grupo04sa.sistema_via_mail.model.Encomienda;
+import com.grupo04sa.sistema_via_mail.model.PagoVenta;
 import com.grupo04sa.sistema_via_mail.model.Ruta;
 import com.grupo04sa.sistema_via_mail.model.Usuario;
 import com.grupo04sa.sistema_via_mail.model.Venta;
 import com.grupo04sa.sistema_via_mail.model.Viaje;
 import com.grupo04sa.sistema_via_mail.repository.EncomiendaRepository;
-import com.grupo04sa.sistema_via_mail.repository.RutaRepository;
+import com.grupo04sa.sistema_via_mail.repository.PagoVentaRepository;
 import com.grupo04sa.sistema_via_mail.repository.UsuarioRepository;
 import com.grupo04sa.sistema_via_mail.repository.VentaRepository;
 import com.grupo04sa.sistema_via_mail.repository.ViajeRepository;
@@ -32,29 +33,33 @@ public class EncomiendaService {
 
     private final EncomiendaRepository encomiendaRepository;
     private final ViajeRepository viajeRepository;
-    private final RutaRepository rutaRepository;
     private final UsuarioRepository usuarioRepository;
     private final VentaRepository ventaRepository;
+    private final PagoVentaRepository pagoVentaRepository;
     private final CommandValidator validator;
 
     public EncomiendaService(EncomiendaRepository encomiendaRepository, ViajeRepository viajeRepository,
-            RutaRepository rutaRepository, UsuarioRepository usuarioRepository,
-            VentaRepository ventaRepository, CommandValidator validator) {
+            UsuarioRepository usuarioRepository,
+            VentaRepository ventaRepository, PagoVentaRepository pagoVentaRepository,
+            CommandValidator validator) {
         this.encomiendaRepository = encomiendaRepository;
         this.viajeRepository = viajeRepository;
-        this.rutaRepository = rutaRepository;
         this.usuarioRepository = usuarioRepository;
         this.ventaRepository = ventaRepository;
+        this.pagoVentaRepository = pagoVentaRepository;
         this.validator = validator;
     }
 
     /**
      * Registrar encomienda (crear venta + encomienda)
+     * 
+     * @param montoOrigen Monto pagado en origen (opcional, requerido para modalidad
+     *                    mixto)
      */
     @Transactional
-    public Encomienda registrarEncomienda(Long viajeId, Long rutaId, Long clienteId,
+    public Encomienda registrarEncomienda(Long viajeId, Long clienteId,
             BigDecimal peso, String destinatario, BigDecimal precio,
-            String modalidadPago, String metodoPago) {
+            String modalidadPago, String metodoPago, BigDecimal montoOrigen) {
         log.debug("Registrando encomienda - Viaje: {}, Cliente: {}, Destinatario: {}",
                 viajeId, clienteId, destinatario);
 
@@ -97,22 +102,46 @@ public class EncomiendaService {
             throw new ValidationException("viaje", "El viaje no está disponible");
         }
 
-        // Verificar que la ruta existe
-        Ruta ruta = rutaRepository.findById(rutaId)
-                .orElseThrow(() -> new EntityNotFoundException("Ruta", rutaId));
+        // Obtener la ruta desde el viaje
+        Ruta ruta = viaje.getRuta();
 
         // Verificar que el cliente existe
         Usuario cliente = usuarioRepository.findById(clienteId)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente", clienteId));
 
-        // Calcular monto pagado en origen
+        // Calcular montos pagados según modalidad
         BigDecimal montoPagadoOrigen = BigDecimal.ZERO;
+        BigDecimal montoPagadoDestino = BigDecimal.ZERO;
         String estadoPago = "Pendiente";
 
-        if ("origen".equals(modalidadPago) && "Efectivo".equals(metodoPago)) {
-            montoPagadoOrigen = precio;
-            estadoPago = "Pagado";
+        if ("origen".equals(modalidadPago)) {
+            // Modalidad origen: se paga todo en origen
+            if ("Efectivo".equals(metodoPago)) {
+                montoPagadoOrigen = precio;
+                estadoPago = "Pagado";
+            }
+        } else if ("mixto".equals(modalidadPago)) {
+            // Modalidad mixto: requiere monto a pagar en origen
+            if (montoOrigen == null || montoOrigen.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ValidationException("montoOrigen",
+                        "Para modalidad mixto debe especificar el monto a pagar en origen");
+            }
+            if (montoOrigen.compareTo(precio) > 0) {
+                throw new ValidationException("montoOrigen",
+                        "El monto en origen no puede ser mayor al precio total");
+            }
+            if ("Efectivo".equals(metodoPago) || "QR".equals(metodoPago)) {
+                montoPagadoOrigen = montoOrigen;
+                montoPagadoDestino = BigDecimal.ZERO;
+                // Si pagó todo en origen, está pagado completamente
+                if (montoPagadoOrigen.compareTo(precio) == 0) {
+                    estadoPago = "Pagado";
+                } else {
+                    estadoPago = "Pendiente";
+                }
+            }
         }
+        // Si es "destino", todo queda en 0 y Pendiente (pago en destino)
 
         // Crear venta
         Venta venta = Venta.builder()
@@ -126,6 +155,19 @@ public class EncomiendaService {
 
         venta = ventaRepository.save(venta);
 
+        // Registrar pago automáticamente si se pagó en origen
+        if (montoPagadoOrigen.compareTo(BigDecimal.ZERO) > 0) {
+            PagoVenta pago = new PagoVenta();
+            pago.setVenta(venta);
+            pago.setMonto(montoPagadoOrigen);
+            pago.setMetodoPago(metodoPago);
+            pago.setNumCuota((short) 1);
+            pago.setFechaPago(LocalDateTime.now());
+            pago.setEstadoPago("pagado");
+            pagoVentaRepository.save(pago);
+            log.info("Pago en origen registrado automáticamente: ${}", montoPagadoOrigen);
+        }
+
         // Crear encomienda
         Encomienda encomienda = Encomienda.builder()
                 .venta(venta)
@@ -135,7 +177,7 @@ public class EncomiendaService {
                 .nombreDestinatario(destinatario)
                 .modalidadPago(modalidadPago)
                 .montoPagadoOrigen(montoPagadoOrigen)
-                .montoPagadoDestino(BigDecimal.ZERO)
+                .montoPagadoDestino(montoPagadoDestino)
                 .build();
 
         encomienda = encomiendaRepository.save(encomienda);

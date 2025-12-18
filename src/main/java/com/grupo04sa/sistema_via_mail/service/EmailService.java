@@ -58,6 +58,10 @@ public class EmailService {
     @Value("${mail.filter.start-date:2025-12-15}")
     private String filterStartDate;
 
+    // Variables para mantener la conexión POP3 abierta durante el procesamiento
+    private Folder currentFolder = null;
+    private Store currentStore = null;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -71,6 +75,9 @@ public class EmailService {
         List<Message> mensajesNoLeidos = new ArrayList<>();
 
         try {
+            // Cerrar conexión anterior si existe
+            cerrarConexionPOP3();
+
             log.debug("Conectando al servidor POP3: {}:{}", pop3Host, pop3Port);
 
             // Configurar propiedades POP3
@@ -83,25 +90,27 @@ public class EmailService {
 
             // Crear sesión y conectar
             Session session = Session.getInstance(properties);
-            Store store = session.getStore("pop3");
-            store.connect(pop3Host, pop3Username, pop3Password);
+            currentStore = session.getStore("pop3");
+            currentStore.connect(pop3Host, pop3Username, pop3Password);
 
-            // Abrir carpeta INBOX
-            Folder inbox = store.getFolder("INBOX");
-            inbox.open(Folder.READ_WRITE);
+            // Abrir carpeta INBOX en modo READ_WRITE
+            currentFolder = currentStore.getFolder("INBOX");
+            currentFolder.open(Folder.READ_WRITE);
 
             // Obtener todos los mensajes
-            Message[] messages = inbox.getMessages();
+            Message[] messages = currentFolder.getMessages();
             log.debug("Total de mensajes en bandeja: {}", messages.length);
 
             // Parsear fecha de inicio del filtro
             LocalDate startDate = LocalDate.parse(filterStartDate);
             log.info("Filtrando correos desde: {}", startDate);
 
-            // Filtrar solo los no leídos y desde la fecha especificada
+            // Filtrar mensajes por fecha (POP3 no maneja flags SEEN de forma confiable)
+            // Solo procesamos mensajes que NO estén marcados para eliminación
             int filtradosPorFecha = 0;
             for (Message message : messages) {
-                if (!message.isSet(Flags.Flag.SEEN)) {
+                // Verificar que no esté marcado para eliminar
+                if (!message.isSet(Flags.Flag.DELETED)) {
                     // Verificar fecha del mensaje
                     Date receivedDate = message.getReceivedDate();
                     if (receivedDate != null) {
@@ -130,24 +139,28 @@ public class EmailService {
 
             log.info("Correos no leídos encontrados: {}", mensajesNoLeidos.size());
 
-            // No cerramos la conexión aquí para permitir marcar como leídos después
+            // Mantener conexión abierta para poder marcar y eliminar mensajes después
 
         } catch (Exception e) {
             log.error("Error al leer correos: {}", e.getMessage(), e);
+            cerrarConexionPOP3(); // Cerrar en caso de error
         }
 
         return mensajesNoLeidos;
     }
 
     /**
-     * Marca un mensaje como leído
+     * Marca un mensaje como leído (POP3 no soporta flags, así que lo eliminamos)
+     * En POP3, la única forma de evitar reprocesar es eliminar el mensaje
      */
     public void marcarComoLeido(Message message) {
         try {
-            message.setFlag(Flags.Flag.SEEN, true);
-            log.debug("Mensaje marcado como leído");
+            // POP3 no soporta flags SEEN de forma confiable
+            // La solución es eliminar el mensaje después de procesarlo
+            message.setFlag(Flags.Flag.DELETED, true);
+            log.info("Mensaje marcado para eliminación (procesado correctamente)");
         } catch (MessagingException e) {
-            log.error("Error al marcar mensaje como leído: {}", e.getMessage());
+            log.error("Error al marcar mensaje para eliminar: {}", e.getMessage());
         }
     }
 
@@ -223,22 +236,24 @@ public class EmailService {
     }
 
     /**
-     * Cierra la conexión con el servidor de correo
+     * Cierra la conexión POP3 actual y aplica expunge
+     * El parámetro 'true' en folder.close() hace expunge (elimina mensajes marcados
+     * como DELETED)
      */
-    public void cerrarConexion(Message message) {
+    public void cerrarConexionPOP3() {
         try {
-            if (message != null && message.getFolder() != null) {
-                Folder folder = message.getFolder();
-                if (folder.isOpen()) {
-                    folder.close(true);
-                }
-                Store store = folder.getStore();
-                if (store.isConnected()) {
-                    store.close();
-                }
+            if (currentFolder != null && currentFolder.isOpen()) {
+                currentFolder.close(true); // true = expunge (eliminar mensajes marcados como DELETED)
+                log.info("✅ Folder cerrado con expunge - Mensajes marcados eliminados del servidor");
+                currentFolder = null;
+            }
+            if (currentStore != null && currentStore.isConnected()) {
+                currentStore.close();
+                log.debug("Conexión POP3 cerrada");
+                currentStore = null;
             }
         } catch (MessagingException e) {
-            log.error("Error al cerrar conexión: {}", e.getMessage());
+            log.error("Error al cerrar conexión POP3: {}", e.getMessage());
         }
     }
 }
