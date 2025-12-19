@@ -80,6 +80,10 @@ public class EncomiendaService {
             throw new ValidationException("modalidadPago", "Modalidad inválida. Valores: origen, mixto, destino");
         }
 
+        // Normalizar modalidad y método de pago a formato estándar
+        modalidadPago = validator.normalizeModalidadPago(modalidadPago);
+        metodoPago = validator.normalizeMetodoPago(metodoPago);
+
         // Si modalidad es origen o mixto, validar método de pago
         if (("origen".equals(modalidadPago) || "mixto".equals(modalidadPago)) &&
                 !validator.isValidMetodoPago(metodoPago)) {

@@ -146,20 +146,49 @@ public class CommandValidator {
     }
 
     /**
-     * Valida modalidad de pago de encomienda
+     * Valida modalidad de pago de encomienda (case-insensitive)
      */
     public boolean isValidModalidadPago(String modalidad) {
-        return modalidad != null && ("origen".equals(modalidad) ||
-                "mixto".equals(modalidad) ||
-                "destino".equals(modalidad));
+        if (modalidad == null)
+            return false;
+        String normalized = modalidad.trim().toLowerCase();
+        return "origen".equals(normalized) ||
+                "mixto".equals(normalized) ||
+                "destino".equals(normalized);
     }
 
     /**
-     * Valida método de pago
+     * Normaliza modalidad de pago a formato estándar (origen, mixto, destino)
+     */
+    public String normalizeModalidadPago(String modalidad) {
+        if (modalidad == null)
+            return null;
+        return modalidad.trim().toLowerCase();
+    }
+
+    /**
+     * Valida método de pago (case-insensitive)
      */
     public boolean isValidMetodoPago(String metodo) {
-        return metodo != null && ("Efectivo".equals(metodo) ||
-                "QR".equals(metodo));
+        if (metodo == null)
+            return false;
+        String normalized = metodo.trim();
+        return "efectivo".equalsIgnoreCase(normalized) ||
+                "qr".equalsIgnoreCase(normalized);
+    }
+
+    /**
+     * Normaliza método de pago a formato estándar (Efectivo, QR)
+     */
+    public String normalizeMetodoPago(String metodo) {
+        if (metodo == null)
+            return null;
+        String normalized = metodo.trim().toLowerCase();
+        if ("efectivo".equals(normalized))
+            return "Efectivo";
+        if ("qr".equals(normalized))
+            return "QR";
+        return metodo; // Devuelve original si no coincide
     }
 
     /**

@@ -14,6 +14,7 @@ import com.grupo04sa.sistema_via_mail.model.PagoVenta;
 import com.grupo04sa.sistema_via_mail.model.Venta;
 import com.grupo04sa.sistema_via_mail.repository.PagoVentaRepository;
 import com.grupo04sa.sistema_via_mail.repository.VentaRepository;
+import com.grupo04sa.sistema_via_mail.util.CommandValidator;
 
 /**
  * Servicio para gestión de pagos de ventas
@@ -25,10 +26,13 @@ public class PagoVentaService {
 
     private final PagoVentaRepository pagoRepository;
     private final VentaRepository ventaRepository;
+    private final CommandValidator validator;
 
-    public PagoVentaService(PagoVentaRepository pagoRepository, VentaRepository ventaRepository) {
+    public PagoVentaService(PagoVentaRepository pagoRepository, VentaRepository ventaRepository,
+            CommandValidator validator) {
         this.pagoRepository = pagoRepository;
         this.ventaRepository = ventaRepository;
+        this.validator = validator;
     }
 
     /**
@@ -41,12 +45,37 @@ public class PagoVentaService {
         Venta venta = ventaRepository.findById(ventaId)
                 .orElseThrow(() -> new EntityNotFoundException("Venta no encontrada con ID: " + ventaId));
 
+        // Normalizar método de pago
+        metodoPago = validator.normalizeMetodoPago(metodoPago);
+
+        // Calcular siguiente número de cuota automáticamente
+        List<PagoVenta> pagosExistentes = pagoRepository.findByVentaId(ventaId);
+        short siguienteCuota = (short) (pagosExistentes.size() + 1);
+
+        // Validar que no haya sobrepago
+        BigDecimal totalPagado = pagosExistentes.stream()
+                .map(PagoVenta::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal saldoPendiente = venta.getMontoTotal().subtract(totalPagado);
+
+        if (saldoPendiente.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new com.grupo04sa.sistema_via_mail.exception.ValidationException("pago",
+                    "La venta ya está completamente pagada. Total: Bs. " + venta.getMontoTotal());
+        }
+
+        if (monto.compareTo(saldoPendiente) > 0) {
+            throw new com.grupo04sa.sistema_via_mail.exception.ValidationException("monto",
+                    "El monto excede el saldo pendiente. Saldo pendiente: Bs. " + saldoPendiente
+                            + ", monto intentado: Bs. " + monto);
+        }
+
         // Crear pago
         PagoVenta pago = new PagoVenta();
         pago.setVenta(venta);
         pago.setMonto(monto);
-        pago.setMetodoPago(metodoPago.trim());
-        pago.setNumCuota(numCuota != null ? numCuota.shortValue() : (short) 1);
+        pago.setMetodoPago(metodoPago);
+        pago.setNumCuota(siguienteCuota); // Usar número de cuota calculado
         pago.setFechaPago(LocalDateTime.now());
         pago.setEstadoPago("pagado");
 

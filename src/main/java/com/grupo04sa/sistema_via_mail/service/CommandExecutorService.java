@@ -543,8 +543,9 @@ public class CommandExecutorService {
         Long id = Long.parseLong(request.getParametros().get(0));
 
         Venta venta = ventaService.obtenerPorId(id);
+        List<PagoVenta> pagos = pagoService.listarPorVenta(id);
 
-        return formatter.formatVenta(venta);
+        return formatter.formatVentaConPagos(venta, pagos);
     }
 
     // ==================== COMANDOS DE PAGOS ====================
@@ -600,7 +601,7 @@ public class CommandExecutorService {
             agregarComandosCliente(sb);
         } else {
             // Usuario anónimo o no registrado (security.permit-all=true)
-            sb.append("⚠️  MODO PÚBLICO ACTIVO - Puedes usar todos los comandos sin restricciones.\n\n");
+            sb.append("OJO.\n\n");
             agregarComandosAnonimo(sb); // Mostrar todos los comandos disponibles
         }
 
@@ -684,7 +685,9 @@ public class CommandExecutorService {
 
         sb.append("💵 VENTAS Y PAGOS:\n");
         sb.append("  • LISVEN - Listar ventas\n");
-        sb.append("  • GETVEN[\"id\"] - Obtener venta\n");
+        sb.append("  • GETVEN[\"id\"] - Obtener venta\n\n");
+
+        sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
         sb.append("  • INSPAG[params] - Registrar pago\n");
         sb.append("    Para completar pago pendiente (mixto/destino):\n");
         sb.append("    INSPAG[\"venta_id\",\"monto\",\"metodo\"] → cambia a Pagado automáticamente\n");
@@ -733,7 +736,6 @@ public class CommandExecutorService {
         sb.append("  • INSUSU[\"ci\",\"nombre\",\"apellido\",\"rol\",\"telefono\",\"email\"]\n");
         sb.append(
                 "    Ejemplo: INSUSU[\"12345678\",\"Juan\",\"Perez\",\"Conductor\",\"75551234\",\"juan@mail.com\"]\n");
-        sb.append("    ⚠️  Tel: 8 dígitos, empieza con 6 o 7, sin guiones\n");
         sb.append("  • LISUSU o LISUSU[\"rol\"] - Listar usuarios\n");
         sb.append("  • GETUSU[\"id\"] - Obtener usuario\n");
         sb.append("  • UPDUSU[\"id\",\"nombre\",\"apellido\",\"tel\",\"email\"]\n");
@@ -766,6 +768,12 @@ public class CommandExecutorService {
         sb.append("  • GETVIA[\"id\"] - Obtener viaje\n");
         sb.append("  • UPDVIA[\"id\",\"ruta_id\",\"vehiculo_id\",\"fecha\",\"precio\",\"asientos\"]\n");
         sb.append("  • DELVIA[\"id\"] - Cancelar viaje\n\n");
+
+        sb.append("Una vez llegado hasta aca. \n");
+        sb.append(" Procedemos a insertar un Cliente.\n");
+        sb.append(
+                "    Ejemplo: INSUSU[\"333333\",\"Evaristo\",\"Chacay\",\"Cliente\",\"68887212\",\"cliente4@mail.com\"]\n");
+        sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
         sb.append("🎫 BOLETOS:\n");
         sb.append("  • INSBOL[\"num_asiento\",\"viaje_id\",\"cliente_id\",\"metodo_pago\"]\n");

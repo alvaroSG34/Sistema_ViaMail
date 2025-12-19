@@ -223,6 +223,38 @@ public class ResponseFormatter {
     }
 
     /**
+     * Formatea una Venta con sus pagos relacionados
+     */
+    public String formatVentaConPagos(Venta venta, List<PagoVenta> pagos) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("- ID: ").append(venta.getId()).append("\n");
+        sb.append("- Tipo: ").append(venta.getTipo()).append("\n");
+        sb.append("- Monto Total: Bs. ").append(venta.getMontoTotal()).append("\n");
+        sb.append("- Estado Pago: ").append(venta.getEstadoPago()).append("\n");
+        sb.append("- Fecha: ").append(venta.getFecha().format(DATE_FORMATTER)).append("\n");
+
+        if (pagos != null && !pagos.isEmpty()) {
+            sb.append("\n💵 PAGOS REALIZADOS (" + pagos.size() + "):\n");
+            java.math.BigDecimal totalPagado = java.math.BigDecimal.ZERO;
+            for (PagoVenta pago : pagos) {
+                sb.append("  Cuota #").append(pago.getNumCuota());
+                sb.append(" - Bs. ").append(pago.getMonto());
+                sb.append(" (").append(pago.getMetodoPago()).append(")");
+                sb.append(" - ").append(pago.getFechaPago().format(DATE_FORMATTER));
+                sb.append("\n");
+                totalPagado = totalPagado.add(pago.getMonto());
+            }
+            sb.append("  Total Pagado: Bs. ").append(totalPagado).append("\n");
+            java.math.BigDecimal saldo = venta.getMontoTotal().subtract(totalPagado);
+            if (saldo.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                sb.append("  Saldo Pendiente: Bs. ").append(saldo).append("\n");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Formatea lista de Ventas
      */
     public String formatVentas(List<Venta> ventas) {

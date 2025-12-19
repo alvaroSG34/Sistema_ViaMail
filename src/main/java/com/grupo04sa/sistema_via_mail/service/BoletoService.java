@@ -63,6 +63,9 @@ public class BoletoService {
             throw new ValidationException("metodoPago", "Método de pago inválido. Valores: Efectivo, QR");
         }
 
+        // Normalizar método de pago a formato estándar
+        metodoPago = validator.normalizeMetodoPago(metodoPago);
+
         // Verificar que el viaje existe
         Viaje viaje = viajeRepository.findById(viajeId)
                 .orElseThrow(() -> new EntityNotFoundException("Viaje", viajeId));
