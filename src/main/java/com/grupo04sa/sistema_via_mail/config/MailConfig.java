@@ -43,19 +43,21 @@ public class MailConfig {
         mailSender.setPort(port);
         mailSender.setProtocol("smtp");
 
-        // Configurar username/password si están presentes (Gmail los necesita)
-        if (username != null && !username.isEmpty()) {
-            mailSender.setUsername(username);
-        }
-        if (password != null && !password.isEmpty()) {
-            mailSender.setPassword(password);
-        }
+        // NO configurar username/password para puerto 25 sin autenticación
+        // Tecnoweb puerto 25 es relay abierto
+        // Si necesitas autenticación (Gmail), habilitar estas líneas:
+        // if (username != null && !username.isEmpty()) {
+        //     mailSender.setUsername(username);
+        // }
+        // if (password != null && !password.isEmpty()) {
+        //     mailSender.setPassword(password);
+        // }
 
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", smtpAuth);
-        props.put("mail.smtp.starttls.enable", starttlsEnable);
-        props.put("mail.smtp.starttls.required", starttlsRequired);
+        props.put("mail.smtp.auth", "false"); // Forzar false para Tecnoweb
+        props.put("mail.smtp.starttls.enable", "false");
+        props.put("mail.smtp.starttls.required", "false");
         props.put("mail.smtp.ssl.enable", "false");
         props.put("mail.smtp.ssl.trust", "*");
         props.put("mail.smtp.connectiontimeout", "10000");
