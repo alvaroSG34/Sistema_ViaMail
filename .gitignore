@@ -41,6 +41,6 @@ logs/
 # application-production.properties
 
 ### Maven ###
-.mvn/
-mvnw
-mvnw.cmd
+#.mvn/
+#mvnw
+#mvnw.cmd
